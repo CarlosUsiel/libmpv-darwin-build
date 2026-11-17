@@ -1,18 +1,14 @@
 name: ci
 
+# PlayTorrio trim: manual runs only; builds only what media_kit_libs_macos_video /
+# media_kit_libs_ios_video download (xcframeworks, universal, video-default).
 on:
-  pull_request:
-    branches:
-      - main
-  push:
-    tags:
-      - "*"
   workflow_dispatch:
     inputs:
-      logLevel:
-        description: "Log level"
+      version:
+        description: "Version string baked into archive names"
         required: true
-        default: "warning"
+        default: "0.6.8-pt1"
 
 jobs:
   ci:
@@ -20,7 +16,7 @@ jobs:
     # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
     runs-on: macos-15
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -51,40 +47,19 @@ jobs:
 
       - uses: DeterminateSystems/magic-nix-cache-action@v8
 
-      - name: Determine version
-        id: version
+      - name: Build (macOS + iOS xcframeworks, video-default only)
         run: |
-          case "${GITHUB_REF}" in
-          refs/tags/*)
-            VERSION=${GITHUB_REF#refs/tags/}
-            ;;
-          *)
-            VERSION=develop
-            ;;
-          esac
-
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo ${VERSION}
-
-      - name: Build
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
+          VERSION=${{ inputs.version }}
           echo \"$VERSION\" > nix/utils/default/version.nix
-          nix build -v
+          nix build -v --out-link result-macos .#mk-out-archive-xcframeworks-macos-universal-video-default
+          nix build -v --out-link result-ios .#mk-out-archive-xcframeworks-ios-universal-video-default
+          ls -la result-macos/ result-ios/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
+          retention-days: 7
           path: |
-            result/*.tar.gz
-            result/*.zip
-
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          fail_on_unmatched_files: true
-          files: |
-            result/*.tar.gz
-            result/*.zip
+            result-macos/*.tar.gz
+            result-ios/*.tar.gz

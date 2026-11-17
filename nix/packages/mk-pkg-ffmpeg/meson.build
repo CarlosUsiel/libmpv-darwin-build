@@ -166,6 +166,8 @@ audio_default_options = [
     # filters
     '--enable-filter=overlay',
     '--enable-filter=equalizer',
+    '--enable-filter=acompressor', # PlayTorrio even volume (LGPL)
+    '--enable-filter=alimiter', # PlayTorrio even volume (LGPL)
 ]
 
 # https://github.com/media-kit/libmpv-android-video-build/blob/7353af784df9bab3256acd8d90f208024d16ab96/buildscripts/flavors/default.sh
