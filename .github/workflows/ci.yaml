@@ -14,7 +14,7 @@ jobs:
   ci:
     name: ci
     # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
-    runs-on: macos-14
+    runs-on: macos-15-intel
     permissions:
       contents: read
     steps:
